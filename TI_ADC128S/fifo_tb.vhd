@@ -53,6 +53,14 @@ begin
         rst <= '0';
         wait for 1.5 * CLK_PRD;
         
+        for i in 0 to 1 loop
+            wait for CLK_PRD;
+            rd_en <= '1';
+            wait for CLK_PRD;
+            rd_en <= '0';
+            wait for CLK_PRD;
+        end loop;
+        
         for i in 0 to 5 loop
             dat := dat - del * cnt;
             data_out <= std_ulogic_vector(to_unsigned(dat, VEC_LEN));
