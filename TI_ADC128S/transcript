@@ -1,0 +1,59 @@
+# Reading C:/altera/15.1/modelsim_ase/tcl/vsim/pref.tcl
+# vsim -gui -modelsimini C:/Users/yifan_000/AppData/Local/Temp/SigasiCompileCache3158970240170245369/TI_ADC128S/mentor/modelsim.ini work.fifo_tb(RTL) 
+# Start time: 17:32:55 on Jul 07,2016
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.fifo_tb(rtl)
+# Loading work.fifo_mem(rtl)
+add wave -position insertpoint sim:/fifo_tb/UUT/*
+restart -f; run -a;
+# ** Failure: Simulation Completed
+#    Time: 1010 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 100
+restart -f; run -a;
+# Loading work.fifo_tb(rtl)
+# GetModuleFileName: The specified module could not be found.
+# 
+# 
+# ** Failure: Simulation Completed
+#    Time: 1310 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 108
+restart -f; run -a;
+# Loading work.fifo_tb(rtl)
+# GetModuleFileName: The specified module could not be found.
+# 
+# 
+# ** Failure: Simulation Completed
+#    Time: 1390 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 108
+restart -f; run -a;
+# Loading work.fifo_tb(rtl)
+# Loading work.fifo_mem(rtl)
+# GetModuleFileName: The specified module could not be found.
+# 
+# 
+# ** Failure: Simulation Completed
+#    Time: 1390 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 108
+restart -f; run -a;
+# Loading work.fifo_tb(rtl)
+# Loading work.fifo_mem(rtl)
+# GetModuleFileName: The specified module could not be found.
+# 
+# 
+# ** Failure: Simulation Completed
+#    Time: 1390 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 108
+restart -f; run -a;
+# Loading work.fifo_tb(rtl)
+# Loading work.fifo_mem(rtl)
+# GetModuleFileName: The specified module could not be found.
+# 
+# 
+# ** Failure: Simulation Completed
+#    Time: 1390 ns  Iteration: 0  Process: /fifo_tb/line__45 File: D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd
+# Break in Process line__45 at D:/Sigasi_WS/TI_ADC128S/fifo_tb.vhd line 108
+# End time: 22:25:02 on Jul 07,2016, Elapsed time: 4:52:07
+# Errors: 0, Warnings: 0
