@@ -1,3 +1,5 @@
+-- altera vhdl_input_version vhdl_2008
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -17,7 +19,7 @@ entity adc_int is
         sclk               : out std_ulogic;
         dout               : out std_ulogic;
         cs_n               : out std_ulogic;
-        din                : out std_ulogic
+        din                : in std_ulogic
     );
 end entity adc_int;
 
@@ -26,7 +28,7 @@ architecture rtl of adc_int is
     signal en, done : std_ulogic;
     signal echo     : std_logic_vector(31 downto 0):= (others => '0');
 
-    constant DIV_MAX  : natural := 31;
+    constant DIV_MAX  : natural := 15;
     constant CONV_MAX : natural := 3;
 
 begin
@@ -47,11 +49,10 @@ begin
             done => done
         );
 
-    avs_s0_readdata <= "00000000000000000000000000000000";
-
     avs_s0_waitrequest <= '0';
     ins_irq0_irq       <= done;
 
+    en      <= '1';
     adc_soc <= '1' when ((avs_s0_address(3 downto 0) = "0000") and (avs_s0_write = '1')) else '0';
 
     process(clock_clk) is

@@ -1,3 +1,5 @@
+-- altera vhdl_input_version vhdl_2008
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -139,10 +141,18 @@ begin
                 if div_cnt = 0 then
                     sclk_var := not sclk_var;
                     if sclk_var = '1' then
-                        sclk_r <= 0 when sclk_r = 15 else sclk_r + 1;
+                        if sclk_r = 15 then
+                            sclk_r <= 0;
+                        else
+                            sclk_r <= sclk_r + 1;
+                        end if;
                     end if;
                     if sclk_var = '0' then
-                        sclk_f <= 0 when sclk_f = 15 else sclk_f + 1;
+                        if sclk_f = 15 then
+                            sclk_f <= 0;
+                        else
+                            sclk_f <= sclk_f + 1;
+                        end if;
                     end if;
                     if sclk_cnt = 31 then
                         sclk_cnt <= 0;
@@ -178,7 +188,9 @@ begin
                         dout <= '0';
                     end case;
                     if (div_cnt = 0) and (sclk_f = sclk_r) then
-                        rlt_conv(conv_cnt)(15 - sclk_f) <= din when sclk_f > 3;
+                        if sclk_f > 3 then
+                            rlt_conv(conv_cnt)(15 - sclk_f) <= din;
+                        end if;
                     end if;
                 else
                     dout<= '0';
@@ -186,6 +198,5 @@ begin
             end if;
         end if;
     end process AIO;
-    
 
 end architecture RTL;
