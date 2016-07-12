@@ -5,26 +5,75 @@ use IEEE.numeric_std.all;
 entity adc_int is
     port(
         avs_s0_address     : in  std_logic_vector(7 downto 0)  := (others => '0'); --   avs_s0.address
-        avs_s0_read        : in  std_logic                     := '0';             --         .read
-        avs_s0_readdata    : out std_logic_vector(31 downto 0);                    --         .readdata
-        avs_s0_write       : in  std_logic                     := '0';             --         .write
+        avs_s0_read        : in  std_logic                     := '0'; --         .read
+        avs_s0_readdata    : out std_logic_vector(31 downto 0); --         .readdata
+        avs_s0_write       : in  std_logic                     := '0'; --         .write
         avs_s0_writedata   : in  std_logic_vector(31 downto 0) := (others => '0'); --         .writedata
-        avs_s0_waitrequest : out std_logic;                                        --         .waitrequest
-        clock_clk          : in  std_logic                     := '0';             --    clock.clk
-        reset_reset        : in  std_logic                     := '0';             --    reset.reset
-        ins_irq0_irq       : out std_logic -- ins_irq0.irq
+        avs_s0_waitrequest : out std_logic; --         .waitrequest
+        clock_clk          : in  std_logic                     := '0'; --    clock.clk
+        reset_reset        : in  std_logic                     := '0'; --    reset.reset
+        ins_irq0_irq       : out std_logic; -- ins_irq0.irq
+
+        sclk               : out std_ulogic;
+        dout               : out std_ulogic;
+        cs_n               : out std_ulogic;
+        din                : out std_ulogic
     );
 end entity adc_int;
 
 architecture rtl of adc_int is
-begin
+    signal adc_soc  : std_ulogic;
+    signal en, done : std_ulogic;
+    signal echo     : std_logic_vector(31 downto 0):= (others => '0');
 
-    -- TODO: Auto-generated HDL template
+    constant DIV_MAX  : natural := 31;
+    constant CONV_MAX : natural := 3;
+
+begin
+    adc128s_logic_inst : entity work.adc128s_logic
+        generic map(
+            DIV_MAX  => DIV_MAX,
+            CONV_MAX => CONV_MAX
+        )
+        port map(
+            clk  => clock_clk,
+            rst  => reset_reset,
+            soc  => adc_soc,
+            en   => en,
+            din  => din,
+            sclk => sclk,
+            cs_n => cs_n,
+            dout => dout,
+            done => done
+        );
 
     avs_s0_readdata <= "00000000000000000000000000000000";
 
     avs_s0_waitrequest <= '0';
+    ins_irq0_irq       <= done;
 
-    ins_irq0_irq <= '0';
+    adc_soc <= '1' when ((avs_s0_address(3 downto 0) = "0000") and (avs_s0_write = '1')) else '0';
+
+    process(clock_clk) is
+    begin
+        if rising_edge(clock_clk) then
+            if reset_reset = '1' then
+                null;
+            else
+                if adc_soc = '1' then
+                    echo <= avs_s0_writedata;
+                end if;
+            end if;
+        end if;
+    end process;
+    
+    process(all)
+    begin
+        if avs_s0_read = '1' then
+            avs_s0_readdata <= echo;
+        else
+            avs_s0_readdata <= (others => '0');
+        end if;
+    end process;
 
 end architecture rtl;

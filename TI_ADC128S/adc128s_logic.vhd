@@ -51,7 +51,8 @@ begin
     -- For debug: channel list initialization
     CHN_INIT:for i in 0 to CONV_MAX + 1 generate
     begin
-        chn_conv(i) <= "101";
+--        chn_conv(i) <= "101";
+        chn_conv(i) <= std_ulogic_vector(to_unsigned(i, 3));
     end generate CHN_INIT;
     
     -- Next state logic
