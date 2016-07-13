@@ -121,6 +121,8 @@ begin
                 else
                     div_cnt <= div_cnt + 1;
                 end if;
+            else
+                div_cnt <= 0;
             end if;
         end if;
     end process CDI;
@@ -146,8 +148,7 @@ begin
                         else
                             sclk_r <= sclk_r + 1;
                         end if;
-                    end if;
-                    if sclk_var = '0' then
+                    elsif sclk_var = '0' then
                         if sclk_f = 15 then
                             sclk_f <= 0;
                         else

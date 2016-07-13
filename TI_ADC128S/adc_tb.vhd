@@ -17,7 +17,7 @@ architecture RTL of adc_tb is
 
     constant CLK_PRD  : time    := 20 ns;
     constant DIV_MAX  : natural := 3;
-    constant CONV_MAX : natural := 3;
+    constant CONV_MAX : natural := 1;
 
 begin
     UUT : entity work.adc128s_logic
@@ -74,7 +74,14 @@ begin
         wait for CLK_PRD;
         soc <= '0';
         wait until cs_n = '1';
+        wait for 5 * CLK_PRD;
+        
+        soc <= '1';
         wait for CLK_PRD;
+        soc <= '0';
+        wait until cs_n = '1';
+        wait for 5 * CLK_PRD;
+        
         assert false
             report "Simulation Completed"
         severity failure;
