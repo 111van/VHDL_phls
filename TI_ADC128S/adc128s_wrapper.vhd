@@ -27,6 +27,9 @@ architecture rtl of adc_int is
     signal adc_soc  : std_ulogic;
     signal en, done : std_ulogic;
     signal echo     : std_logic_vector(31 downto 0):= (others => '0');
+    
+    signal fifo_rd  : std_ulogic;
+    signal fifo_out : std_ulogic_vector(11 downto 0);
 
     constant DIV_MAX  : natural := 15;
     constant CONV_MAX : natural := 3;
@@ -46,7 +49,10 @@ begin
             sclk => sclk,
             cs_n => cs_n,
             dout => dout,
-            done => done
+            done => done,
+            
+            fifo_rd  => fifo_rd,
+            fifo_out => fifo_out
         );
 
     avs_s0_waitrequest <= '0';

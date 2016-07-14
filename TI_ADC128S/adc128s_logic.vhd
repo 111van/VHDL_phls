@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 entity adc128s_logic is
     generic(
-        DIV_MAX  : natural range 1 to 255 := 2;
+        DIV_MAX  : natural range 1 to 255 := 15;
         CONV_MAX : natural range 0 to 6   := 6  -- always convert channel 0 first
     );
 
@@ -19,11 +19,16 @@ entity adc128s_logic is
         sclk : out std_ulogic;
         cs_n : out std_ulogic;
         dout : out std_ulogic;
-        done : out std_ulogic
+        done : out std_ulogic;
+        
+        fifo_rd : in  std_ulogic;
+        fifo_out : out std_ulogic_vector(11 downto 0)
     );
 end entity adc128s_logic;
 
 architecture RTL of adc128s_logic is
+    constant DIV_HLF : natural := (DIV_MAX + 1)/2;
+    
     type state_type is (s_reset, s_idle, s_conv, s_done);
 
     subtype chn is std_ulogic_vector(2 downto 0);
@@ -42,8 +47,6 @@ architecture RTL of adc128s_logic is
     signal div_cnt  : natural range 0 to DIV_MAX;
     signal sclk_cnt : natural range 0 to 31;
     signal conv_cnt : natural range 0 to CONV_MAX + 2;
-    signal sclk_r   : natural range 0 to 16;
-    signal sclk_f   : natural range 0 to 15;
     
     -- Flags
     signal run      : std_ulogic;
@@ -52,9 +55,9 @@ architecture RTL of adc128s_logic is
     -- Fifo
     signal rlt_tmp : std_ulogic_vector(11 downto 0) := (others => '0');
     signal fifo_rst : std_ulogic;
-    signal wr_en, rd_en : std_ulogic := '0';
+    signal fifo_wr : std_ulogic := '0';
     signal full, empty : std_ulogic;
-    signal fifo_in, fifo_out : std_ulogic_vector(11 downto 0);
+    signal fifo_in : std_ulogic_vector(11 downto 0);
 
 begin
     -- Result fifo
@@ -66,18 +69,18 @@ begin
         port map(
             clk   => clk,
             rst   => fifo_rst,
-            wr_en => wr_en,
-            rd_en => rd_en,
+            wr_en => fifo_wr,
+            rd_en => fifo_rd,
             full  => full,
             empty => empty,
             fin   => fifo_in,
             fout  => fifo_out
         );
-    FIF_INIT:process(all)
+    FIF_INIT : process(all)
     begin
         fifo_rst <= rst or soc;
-        fifo_in <= rlt_tmp;
-        wr_en <= '1' when (div_cnt = 1) and (sclk_cnt = 0) else '0';
+        fifo_in  <= rlt_tmp;
+--        fifo_wr    <= '1' when (div_cnt = DIV_HLF + 2) and (sclk_cnt = 0) else '0';
     end process;
         
     -- For debug: channel list initialization
@@ -86,6 +89,21 @@ begin
 --        chn_conv(i) <= "101";
         chn_conv(i) <= std_ulogic_vector(to_unsigned(i + 1, 3));
     end generate CHN_INIT;
+    
+    FWR : process(clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                fifo_wr <= '0';
+            else
+                if (div_cnt = DIV_HLF + 1) and (sclk_cnt = 0) then
+                    fifo_wr <= '1';
+                else
+                    fifo_wr <= '0';
+                end if;
+            end if;
+        end if;
+    end process;
     
     -- Next state logic
     NSL : process(clk)
@@ -104,7 +122,7 @@ begin
                             state <= s_idle;
                         end if;
                     when s_conv =>
-                        if (conv_cnt = CONV_MAX + 1) and (div_cnt = 0) and (sclk_cnt = 31) then
+                        if (conv_cnt = CONV_MAX + 2) then
                             state <= s_done;
                         else
                             state <= s_conv;
@@ -166,25 +184,10 @@ begin
                 cs_n     <= '1';
                 sclk_var := '1';
                 sclk_cnt <= 0;
-                sclk_r <= 0;
-                sclk_f <= 0;
             elsif (run = '1') then
                 cs_n <= '0';
-                if div_cnt = 0 then
+                if (div_cnt = 0) or (div_cnt = DIV_HLF)  then
                     sclk_var := not sclk_var;
-                    if sclk_var = '1' then
-                        if sclk_r = 15 then
-                            sclk_r <= 0;
-                        else
-                            sclk_r <= sclk_r + 1;
-                        end if;
-                    elsif sclk_var = '0' then
-                        if sclk_f = 15 then
-                            sclk_f <= 0;
-                        else
-                            sclk_f <= sclk_f + 1;
-                        end if;
-                    end if;
                     if sclk_cnt = 31 then
                         sclk_cnt <= 0;
                         conv_cnt <= conv_cnt + 1;
@@ -207,25 +210,24 @@ begin
             if rst = '1' then
                 dout <= '0';
             else
-                if true then
-                    case sclk_f is
-                    when 3 =>
+                if div_cnt = 0 then
+                    case sclk_cnt is
+                    when 8 =>
                         dout <= chn_conv(conv_cnt)(2);
-                    when 4 =>
+                    when 10 =>
                         dout <= chn_conv(conv_cnt)(1);
-                    when 5 =>
+                    when 12 =>
                         dout <= chn_conv(conv_cnt)(0);
                     when others =>
                         dout <= '0';
                     end case;
-                    if (div_cnt = 0) and (sclk_f = sclk_r) then
-                        if sclk_f > 3 then
---                            rlt_conv(conv_cnt)(15 - sclk_f) <= din;
-                            rlt_tmp(15 - sclk_f) <= din;
-                        end if;
-                    end if;
                 else
-                    dout<= '0';
+                    dout <= dout;
+                end if;
+                if div_cnt = DIV_HLF then
+                    if sclk_cnt > 8 then
+                        rlt_tmp <= rlt_tmp(10 downto 0) & din;
+                    end if;
                 end if;
             end if;
         end if;

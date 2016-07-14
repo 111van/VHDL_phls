@@ -14,9 +14,13 @@ architecture RTL of adc_tb is
     signal sclk : std_ulogic;
     signal cs_n : std_ulogic;
     signal dout : std_ulogic;
+    signal done : std_ulogic;
+    
+    signal fifo_rd  : std_ulogic;
+    signal fifo_out : std_ulogic_vector(11 downto 0);
 
     constant CLK_PRD  : time    := 20 ns;
-    constant DIV_MAX  : natural := 3;
+    constant DIV_MAX  : natural := 7;
     constant CONV_MAX : natural := 1;
 
 begin
@@ -33,7 +37,11 @@ begin
             din  => din,
             sclk => sclk,
             cs_n => cs_n,
-            dout => dout
+            dout => dout,
+            done => done,
+            
+            fifo_rd  => fifo_rd,
+            fifo_out => fifo_out
         );
 
     process
@@ -43,12 +51,13 @@ begin
     end process;
 
     process(sclk)
-        variable dat : std_ulogic_vector(11 downto 0) := "101010101010";
-        variable cnt : natural range 0 to 15          := 15;
+        variable dat : std_ulogic_vector(11 downto 0) := "100000000001";
+        variable cnt : natural          := 16;
     begin
-        if rising_edge(sclk) then
+        if falling_edge(sclk) then
             if cnt = 0 then
                 cnt := 15;
+                dat := dat xor "010000000010";
             else
                 cnt := cnt - 1;
             end if;
@@ -66,6 +75,7 @@ begin
         rst <= '1';
         en  <= '0';
         soc <= '0';
+        fifo_rd <= '0';
         wait for CLK_PRD;
         rst <= '0';
         en  <= '1';
@@ -73,7 +83,15 @@ begin
         soc <= '1';
         wait for CLK_PRD;
         soc <= '0';
-        wait until cs_n = '1';
+--        wait until cs_n = '1';
+        wait until rising_edge(done);
+        for i in 0 to 2 loop
+            fifo_rd <= '1';
+            wait for CLK_PRD;
+            fifo_rd <= '0';
+            wait for CLK_PRD;
+        end loop;
+        
         wait for 5 * CLK_PRD;
         
         soc <= '1';
