@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 entity adc128s_logic is
     generic(
         DIV_MAX  : natural range 1 to 255 := 2;
-        CONV_MAX : natural                := 7
+        CONV_MAX : natural range 0 to 6   := 6  -- always convert channel 0 first
     );
 
     port(
@@ -29,14 +29,14 @@ architecture RTL of adc128s_logic is
     subtype chn is std_ulogic_vector(2 downto 0);
     type chn_list is array (CONV_MAX + 1 downto 0) of chn;
 
-    subtype rlt is std_ulogic_vector(11 downto 0);
-    type rlt_list is array (CONV_MAX + 1 downto 0) of rlt;
+--    subtype rlt is std_ulogic_vector(11 downto 0);
+--    type rlt_list is array (CONV_MAX + 1 downto 0) of rlt;
 
     signal state    : state_type;
     
     -- Lists
     signal chn_conv : chn_list;
-    signal rlt_conv : rlt_list;
+--    signal rlt_conv : rlt_list;
     
     -- Counters
     signal div_cnt  : natural range 0 to DIV_MAX;
@@ -48,13 +48,43 @@ architecture RTL of adc128s_logic is
     -- Flags
     signal run      : std_ulogic;
     signal rw_al    : std_ulogic;
+    
+    -- Fifo
+    signal rlt_tmp : std_ulogic_vector(11 downto 0) := (others => '0');
+    signal fifo_rst : std_ulogic;
+    signal wr_en, rd_en : std_ulogic := '0';
+    signal full, empty : std_ulogic;
+    signal fifo_in, fifo_out : std_ulogic_vector(11 downto 0);
 
 begin
+    -- Result fifo
+    rlt_fifo : entity work.fifo_mem
+        generic map(
+            STG_LEN => CONV_MAX + 2,
+            VEC_LEN => 12
+        )
+        port map(
+            clk   => clk,
+            rst   => fifo_rst,
+            wr_en => wr_en,
+            rd_en => rd_en,
+            full  => full,
+            empty => empty,
+            fin   => fifo_in,
+            fout  => fifo_out
+        );
+    FIF_INIT:process(all)
+    begin
+        fifo_rst <= rst or soc;
+        fifo_in <= rlt_tmp;
+        wr_en <= '1' when (div_cnt = 1) and (sclk_cnt = 0) else '0';
+    end process;
+        
     -- For debug: channel list initialization
     CHN_INIT:for i in 0 to CONV_MAX + 1 generate
     begin
 --        chn_conv(i) <= "101";
-        chn_conv(i) <= std_ulogic_vector(to_unsigned(i, 3));
+        chn_conv(i) <= std_ulogic_vector(to_unsigned(i + 1, 3));
     end generate CHN_INIT;
     
     -- Next state logic
@@ -190,7 +220,8 @@ begin
                     end case;
                     if (div_cnt = 0) and (sclk_f = sclk_r) then
                         if sclk_f > 3 then
-                            rlt_conv(conv_cnt)(15 - sclk_f) <= din;
+--                            rlt_conv(conv_cnt)(15 - sclk_f) <= din;
+                            rlt_tmp(15 - sclk_f) <= din;
                         end if;
                     end if;
                 else

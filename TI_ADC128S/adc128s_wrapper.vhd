@@ -75,6 +75,7 @@ begin
         else
             avs_s0_readdata <= (others => '0');
         end if;
+--        avs_s0_readdata <= echo when avs_s0_read = '1' else (others => '0');
     end process;
 
 end architecture rtl;

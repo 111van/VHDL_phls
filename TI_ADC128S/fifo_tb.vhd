@@ -31,8 +31,8 @@ begin
             rd_en => rd_en,
             full  => full,
             empty => empty,
-            din   => data_out,
-            dout  => data_in
+            fin   => data_out,
+            fout  => data_in
         );
     process
     begin

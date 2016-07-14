@@ -1,3 +1,5 @@
+-- altera vhdl_input_version vhdl_2008
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -16,8 +18,8 @@ entity fifo_mem is
         full : out std_ulogic;
         empty : out std_ulogic;
         
-        din : in std_ulogic_vector(VEC_LEN - 1 downto 0);
-        dout : out std_ulogic_vector(VEC_LEN - 1 downto 0)
+        fin : in std_ulogic_vector(VEC_LEN - 1 downto 0);
+        fout : out std_ulogic_vector(VEC_LEN - 1 downto 0)
     );
 end entity fifo_mem;
 
@@ -54,18 +56,18 @@ begin
     begin
         if rising_edge(clk) then
             if rst = '1' then
-                dout <= (others => '0');
+                fout <= (others => '0');
                 ptr_wr <= 0;
                 ptr_rd <= 0;
                 stop_fl <= '0';
             else
                 if (wr_en = '1') and (full = '0') then
-                    mem(ptr_wr) <= din;
+                    mem(ptr_wr) <= fin;
                     ptr_wr <= 0 when ptr_wr = (STG_LEN - 1) else (ptr_wr + 1);
                     stop_fl <= '1';
                 end if;
                 if (rd_en = '1') and (empty = '0') then
-                    dout <= mem(ptr_rd);
+                    fout <= mem(ptr_rd);
                     ptr_rd <= 0 when ptr_rd = (STG_LEN - 1) else (ptr_rd + 1);
                     stop_fl <= '0';
                 end if;
