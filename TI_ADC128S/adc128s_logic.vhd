@@ -22,7 +22,11 @@ entity adc128s_logic is
         done : out std_ulogic;
         
         fifo_rd : in  std_ulogic;
-        fifo_out : out std_ulogic_vector(11 downto 0)
+        fifo_out : out std_ulogic_vector(11 downto 0);
+        
+        addr_wr : in  std_ulogic;
+        addr_in : in std_ulogic_vector(2 downto 0);
+        addr_rst : in  std_ulogic
     );
 end entity adc128s_logic;
 
@@ -53,11 +57,18 @@ architecture RTL of adc128s_logic is
     signal rw_al    : std_ulogic;
     
     -- Fifo
-    signal rlt_tmp : std_ulogic_vector(11 downto 0) := (others => '0');
-    signal fifo_rst : std_ulogic;
-    signal fifo_wr : std_ulogic := '0';
+    signal rlt_tmp     : std_ulogic_vector(11 downto 0) := (others => '0');
+    signal fifo_rst    : std_ulogic;
+    signal fifo_wr     : std_ulogic                     := '0';
     signal full, empty : std_ulogic;
-    signal fifo_in : std_ulogic_vector(11 downto 0);
+    signal fifo_in     : std_ulogic_vector(11 downto 0);
+    
+    signal addr_wr_f  : std_ulogic;
+    signal addr_wr_i  : std_ulogic;
+    signal addr_in_f  : std_ulogic_vector(2 downto 0);
+    signal addr_in_i  : std_ulogic_vector(2 downto 0);
+    signal addr_rd    : std_ulogic;
+    signal addr_out   : std_ulogic_vector(2 downto 0);
 
 begin
     -- Result fifo
@@ -76,17 +87,48 @@ begin
             fin   => fifo_in,
             fout  => fifo_out
         );
-    FIF_INIT : process(all)
-    begin
-        fifo_rst <= rst or soc;
-        fifo_in  <= rlt_tmp;
---        fifo_wr    <= '1' when (div_cnt = DIV_HLF + 2) and (sclk_cnt = 0) else '0';
-    end process;
+    fifo_rst <= soc;
+    fifo_in  <= rlt_tmp;
+    
+    -- Address fifo
+    adr_fifo : entity work.fifo_mem
+        generic map(
+            STG_LEN => CONV_MAX + 2,
+            VEC_LEN => 3
+        )
+        port map(
+            clk   => clk,
+            rst   => addr_rst,
+            wr_en => addr_wr_f,
+            rd_en => addr_rd,
+            full  => open,
+            empty => open,
+            fin   => addr_in,
+            fout  => addr_out
+        );
         
+    addr_wr_f <= addr_wr when rw_al = '1' else addr_wr_i;
+    addr_in_f <= addr_in when rw_al = '1' else addr_in_i;
+    addr_in_i <= addr_out;
+    ADR : process (clk) is
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                null;
+            else
+                if (sclk_cnt = 1) and (div_cnt = 1) then
+                    addr_rd <= '1';
+                else
+                    addr_rd <= '0';
+                end if;
+            end if;
+        end if;
+    end process ADR;
+    
+
     -- For debug: channel list initialization
     CHN_INIT:for i in 0 to CONV_MAX + 1 generate
     begin
---        chn_conv(i) <= "101";
         chn_conv(i) <= std_ulogic_vector(to_unsigned(i + 1, 3));
     end generate CHN_INIT;
     

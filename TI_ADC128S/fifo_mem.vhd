@@ -61,12 +61,18 @@ begin
                 ptr_rd <= 0;
                 stop_fl <= '0';
             else
-                if (wr_en = '1') and (full = '0') then
+                if (wr_en = '1') and (rd_en = '1') then
+                    if empty = '0' then
+                        fout <= mem(ptr_rd);
+                        ptr_rd <= 0 when ptr_rd = (STG_LEN - 1) else (ptr_rd + 1);
+                        mem(ptr_wr) <= fin;
+                        ptr_wr <= 0 when ptr_wr = (STG_LEN - 1) else (ptr_wr + 1);
+                    end if;
+                elsif (wr_en = '1') and (full = '0') then
                     mem(ptr_wr) <= fin;
                     ptr_wr <= 0 when ptr_wr = (STG_LEN - 1) else (ptr_wr + 1);
                     stop_fl <= '1';
-                end if;
-                if (rd_en = '1') and (empty = '0') then
+                elsif (rd_en = '1') and (empty = '0') then
                     fout <= mem(ptr_rd);
                     ptr_rd <= 0 when ptr_rd = (STG_LEN - 1) else (ptr_rd + 1);
                     stop_fl <= '0';

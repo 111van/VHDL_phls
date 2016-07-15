@@ -18,6 +18,11 @@ architecture RTL of adc_tb is
     
     signal fifo_rd  : std_ulogic;
     signal fifo_out : std_ulogic_vector(11 downto 0);
+    
+    signal addr_wr : std_ulogic;
+    signal addr_in : std_ulogic_vector(2 downto 0);
+    signal addr_rst : std_ulogic;
+    
 
     constant CLK_PRD  : time    := 20 ns;
     constant DIV_MAX  : natural := 7;
@@ -41,7 +46,11 @@ begin
             done => done,
             
             fifo_rd  => fifo_rd,
-            fifo_out => fifo_out
+            fifo_out => fifo_out,
+            
+            addr_wr => addr_wr,
+            addr_in => addr_in,
+            addr_rst => addr_rst
         );
 
     process
